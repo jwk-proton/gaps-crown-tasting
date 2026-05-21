@@ -198,7 +198,8 @@ function doGetAggregate(e) {
       }).sort(function(a, b) { return a.avgRank - b.avgRank; });
     }
 
-    var finalists = flightAgg(FLIGHT_0, 0).slice(0,2).concat(flightAgg(FLIGHT_1, 1).slice(0,2));
+    var finalists = flightAgg(FLIGHT_0, 0).slice(0,2).concat(flightAgg(FLIGHT_1, 1).slice(0,2))
+  .sort(function(a, b) { return a.avgRank - b.avgRank; });
     return jsonResponse({ ok: true, tasters: tasters, finalists: finalists });
 
   } catch (err) {
