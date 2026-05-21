@@ -495,7 +495,7 @@ html, body {
    CONFIGURATION
    Paste your deployed Apps Script URL here.
    ════════════════════════════════════════ */
-var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzGr3dJHOuDoU5oQMxTkhLG_tA0WDmx0F-JDs2sjhUrwfY978FybXbZ3Yb6gTxPyRxs3Q/exec';
+var SCRIPT_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
 
 
 /* ════════════════════════════════════════
@@ -718,20 +718,19 @@ function getWine(id) {
  * finalist notes the taster has already entered.
  */
 function deriveFinalistsFromAggregate(serverFinalists) {
-  // serverFinalists = [{id, flight, avgRank, submissions}] — top 2 from each flight
+  // serverFinalists already sorted by avgRank from the server.
+  // Always use server order as the base; preserve only existing notes.
   var newFin = serverFinalists.map(function(agg, i) {
     var existing = finalists.filter(function(f) { return f.id === agg.id; })[0];
     return {
       id:           agg.id,
-      finalistRank: existing ? existing.finalistRank : i + 1,
+      finalistRank: i + 1,          // always use server-sorted position
       notes:        existing ? existing.notes : '',
       avgRank:      agg.avgRank,
       submissions:  agg.submissions
     };
   });
-
-  newFin.sort(function(a, b) { return a.finalistRank - b.finalistRank; });
-  newFin.forEach(function(f, i) { f.finalistRank = i + 1; });
+  // No re-sort needed — server order is authoritative
   finalists = newFin;
 }
 
