@@ -107,6 +107,20 @@ html, body {
 }
 .go-btn:active { opacity: 0.8; }
 
+/* Loading spinner shown while fetching taster record from Sheets */
+#loading-screen {
+  display: none;
+  min-height: calc(100vh - 70px);
+  align-items: center; justify-content: center;
+  flex-direction: column; gap: 14px;
+}
+.load-spinner {
+  width: 28px; height: 28px;
+  border: 2.5px solid var(--sep); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin 0.7s linear infinite;
+}
+.load-msg { font-size: 14px; color: var(--ink-2); }
+
 
 /* ════════════════════════════════════════
    TASTING SCREEN
@@ -391,6 +405,16 @@ html, body {
 
 
 <!-- ══════════════════════════════════════
+     LOADING SCREEN
+     Shown while fetching taster record from Sheets after name selection.
+     ══════════════════════════════════════ -->
+<div id="loading-screen">
+  <div class="load-spinner"></div>
+  <div class="load-msg">Loading your scorecard…</div>
+</div>
+
+
+<!-- ══════════════════════════════════════
      TASTING SCREEN
      ══════════════════════════════════════ -->
 <div id="tasting">
@@ -467,7 +491,7 @@ html, body {
    CONFIGURATION
    Paste your deployed Apps Script URL here.
    ════════════════════════════════════════ */
-var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzOky0lNTfh6Ec0jxQjNk16PCaeKxShBGp4u4k90sdKQUjncuXrkyiJro8Q4OLTHq14CQ/exec';
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbztguizO0QlDgqknqZK4flr_2f_w3A58w8bSlJjgj9R0sXK7L_a4JEkbz2eAcHH7OMZog/exec';
 
 
 /* ════════════════════════════════════════
@@ -569,6 +593,22 @@ function fetchAggregate() {
     .catch(function() { return { ok: false, error: 'network' }; });
 }
 
+/**
+ * Fetches a single taster's saved record from the Sheets backend.
+ * Returns a Promise resolving to:
+ *   { ok: true, found: true, wines: [...], finalists: [...] }
+ *   { ok: true, found: false }   — taster not in sheet yet
+ *   { ok: false, error: '...' } — network/config error
+ */
+function fetchTasterRecord(name) {
+  if (!SCRIPT_URL || SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
+    return Promise.resolve({ ok: false, error: 'not_configured' });
+  }
+  return fetch(SCRIPT_URL + '?action=taster&name=' + encodeURIComponent(name))
+    .then(function(r) { return r.json(); })
+    .catch(function() { return { ok: false, error: 'network' }; });
+}
+
 
 /* ════════════════════════════════════════
    SETUP
@@ -590,19 +630,42 @@ function typeName(val) {
 
 function beginTasting() {
   if (!taster) return;
-  try {
-    var saved = localStorage.getItem('gc_' + taster);
-    if (saved) {
-      var s = JSON.parse(saved);
-      wines     = s.wines     || wines;
-      finalists = s.finalists || [];
-    }
-  } catch(e) {}
 
-  document.getElementById('setup').style.display  = 'none';
-  document.getElementById('tasting').style.display = 'block';
-  document.getElementById('tname').textContent = taster;
-  renderAll();
+  // Show loading spinner, hide setup
+  document.getElementById('setup').style.display         = 'none';
+  document.getElementById('loading-screen').style.display = 'flex';
+
+  fetchTasterRecord(taster).then(function(data) {
+    document.getElementById('loading-screen').style.display = 'none';
+
+    if (data.ok && data.found) {
+      // Restore from Sheets — source of truth
+      wines     = data.wines     || wines;
+      finalists = data.finalists || [];
+    } else {
+      // No record in Sheets — start completely clean, ignore localStorage
+      wines = [
+        {id:'A', flight:0, rank:1, notes:''},
+        {id:'B', flight:0, rank:2, notes:''},
+        {id:'C', flight:0, rank:3, notes:''},
+        {id:'D', flight:0, rank:4, notes:''},
+        {id:'E', flight:0, rank:5, notes:''},
+        {id:'F', flight:1, rank:1, notes:''},
+        {id:'G', flight:1, rank:2, notes:''},
+        {id:'H', flight:1, rank:3, notes:''},
+        {id:'I', flight:1, rank:4, notes:''},
+        {id:'J', flight:1, rank:5, notes:''}
+      ];
+      finalists = [];
+    }
+
+    // Write clean state to localStorage so subsequent saves are fast
+    save();
+
+    document.getElementById('tasting').style.display = 'block';
+    document.getElementById('tname').textContent = taster;
+    renderAll();
+  });
 }
 
 function save() {
