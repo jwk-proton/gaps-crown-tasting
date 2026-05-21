@@ -495,7 +495,7 @@ html, body {
    CONFIGURATION
    Paste your deployed Apps Script URL here.
    ════════════════════════════════════════ */
-var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzGr3dJHOuDoU5oQMxTkhLG_tA0WDmx0F-JDs2sjhUrwfY978FybXbZ3Yb6gTxPyRxs3Q/exec';
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5i0DikDyAIJ1dgTI1tEIAXKMOEbFKwtkvC1Zcb_m2BmZpE8YXWT4WEd63ZYrEszdRkw/exec';
 
 
 /* ════════════════════════════════════════
@@ -551,7 +551,7 @@ function setSyncState(state) {
  * localStorage is always written regardless.
  */
 function syncToSheets() {
-  if (!SCRIPT_URL || SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbzGr3dJHOuDoU5oQMxTkhLG_tA0WDmx0F-JDs2sjhUrwfY978FybXbZ3Yb6gTxPyRxs3Q/exec') return;
+  if (!SCRIPT_URL || SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') return;
 
   clearTimeout(syncTimer);
   setSyncState('syncing');
