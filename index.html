@@ -41,18 +41,15 @@ html, body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--ff);
-  -webkit-font-smoothing: antialiased; /* sharper text on macOS/iOS */
+  -webkit-font-smoothing: antialiased;
 }
 
 
 /* ════════════════════════════════════════
    HEADER
-   Sticky frosted-glass header that stays
-   visible as the user scrolls through wines.
    ════════════════════════════════════════ */
 .hdr {
   background: var(--bg-nav);
-  /* Frosted glass effect — supported in Safari/Chrome; degrades gracefully */
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   position: sticky; top: 0; z-index: 100;
@@ -66,12 +63,9 @@ html, body {
 
 /* ════════════════════════════════════════
    SETUP SCREEN
-   Shown before tasting begins. Taster
-   selects or types their name, then taps
-   "Begin tasting" to enter the main app.
    ════════════════════════════════════════ */
 #setup {
-  min-height: calc(100vh - 70px); /* fill the viewport below the header */
+  min-height: calc(100vh - 70px);
   display: flex; align-items: flex-start; justify-content: center;
   padding: 28px 16px 40px;
 }
@@ -80,7 +74,6 @@ html, body {
 .setup-sub   { font-size: 15px; color: var(--ink-2); line-height: 1.5; margin-bottom: 28px; }
 .sec-lbl     { font-size: 12px; font-weight: 500; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.05em; padding: 0 2px; margin-bottom: 8px; }
 
-/* Grid of taster name chips — tap to select */
 .chip-grid {
   background: var(--bg-card); border-radius: var(--r);
   padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 8px;
@@ -93,23 +86,17 @@ html, body {
   cursor: pointer; -webkit-tap-highlight-color: transparent;
   transition: background 0.12s, color 0.12s; user-select: none;
 }
-.chip.on { background: var(--accent); color: #fff; font-weight: 500; } /* selected state */
+.chip.on { background: var(--accent); color: #fff; font-weight: 500; }
 
-/* Free-text name input for guests not in the chip list */
 .name-wrap { margin-bottom: 24px; }
 .name-input {
   display: block; width: 100%; padding: 13px 16px;
   background: var(--bg-card); border: none; border-radius: var(--r-sm);
   font-family: var(--ff); font-size: 17px; color: var(--ink);
-  outline: none; -webkit-appearance: none; /* remove iOS default styling */
+  outline: none; -webkit-appearance: none;
 }
 .name-input::placeholder { color: var(--ink-3); }
 
-/*
-  "Begin tasting" button — hidden (display:none) until a name is selected.
-  Revealed by JS via style.display = 'block'. Using a <div> not <button>
-  because iOS Safari had tap-recognition issues with <button> in local files.
-*/
 .go-btn {
   display: none; width: 100%; padding: 15px;
   background: var(--accent); color: #fff; border: none;
@@ -123,12 +110,9 @@ html, body {
 
 /* ════════════════════════════════════════
    TASTING SCREEN
-   Main scoring interface. Hidden until
-   the taster presses "Begin tasting".
    ════════════════════════════════════════ */
 #tasting { display: none; padding-bottom: 40px; }
 
-/* Taster name + progress bar strip below the header */
 .tbar {
   background: var(--bg-card); border-bottom: 0.5px solid var(--sep);
   padding: 7px 16px; display: flex; align-items: center; gap: 10px;
@@ -136,16 +120,24 @@ html, body {
 .tbar-name { font-size: 13px; color: var(--ink-2); white-space: nowrap; }
 .tbar-name strong { color: var(--ink); font-weight: 500; }
 
-/* Progress bar — fills as notes are added (notes count / total wines) */
 .prog-wrap { flex: 1; height: 4px; background: var(--fill); border-radius: 4px; overflow: hidden; }
 .prog-fill  { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.4s; }
 .prog-lbl   { font-size: 12px; color: var(--ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
-/*
-  Segmented control — iOS-style tab switcher.
-  Four segments: Flight I, Flight II, Finalists, Results.
-  Active segment gets a white pill with subtle shadow.
-*/
+/* Sync status indicator — small dot + text in the tbar */
+.sync-status {
+  font-size: 11px; color: var(--ink-3); white-space: nowrap;
+  display: flex; align-items: center; gap: 4px;
+}
+.sync-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--ink-3); flex-shrink: 0;
+  transition: background 0.3s;
+}
+.sync-dot.syncing  { background: #C9A14C; }  /* amber while in-flight */
+.sync-dot.synced   { background: #6aaa64; }  /* green on success */
+.sync-dot.error    { background: #c9534f; }  /* red on failure */
+
 .seg-wrap { padding: 8px 16px; background: var(--bg); border-bottom: 0.5px solid var(--sep); }
 .seg { display: flex; background: var(--fill); border-radius: 9px; padding: 2px; gap: 2px; }
 .seg-btn {
@@ -161,7 +153,6 @@ html, body {
   box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 0.5px 1px rgba(0,0,0,0.08);
 }
 
-/* Each tab content area — only the active panel is shown */
 .panel { display: none; padding: 14px 16px; }
 .panel.on { display: block; }
 .panel-hint { font-size: 13px; color: var(--ink-2); text-align: center; margin-bottom: 10px; }
@@ -169,16 +160,10 @@ html, body {
 
 /* ════════════════════════════════════════
    WINE CARDS
-   Each wine is a list item with:
-   - rank-col:  large rank number on the left (drag handle zone)
-   - wbody:     wine code, flight tag, notes textarea
-   - drag-col:  six-dot grip handle on the right (drag handle zone)
-
    IMPORTANT: draggable="true" is intentionally NOT set on the <li>.
    Firefox suppresses textarea text selection on any element with
-   draggable="true" applied, even on child elements. Instead, drag
-   is triggered manually from mousedown/touchstart on rank-col and
-   drag-col only — leaving the textarea completely unaffected.
+   draggable="true". Drag is triggered manually from mousedown/touchstart
+   on rank-col and drag-col only.
    ════════════════════════════════════════ */
 .wine-list { list-style: none; background: var(--bg-card); border-radius: var(--r); overflow: hidden; }
 
@@ -187,24 +172,17 @@ html, body {
   background: var(--bg-card); cursor: grab;
   position: relative; -webkit-tap-highlight-color: transparent;
 }
-/* Hairline separator between cards — only visible between siblings, not at top of first */
 .wcard + .wcard::before {
   content: ''; position: absolute;
-  top: 0; left: 52px; right: 0; /* starts at right edge of rank column */
+  top: 0; left: 52px; right: 0;
   height: 0.5px; background: var(--sep);
 }
-/* Visual feedback when a card is being dragged */
 .wcard.dragging {
   background: var(--bg);
   box-shadow: 0 6px 24px rgba(0,0,0,0.13);
   border-radius: var(--r); z-index: 50;
 }
 
-/*
-  Rank number column — left side of each card.
-  touch-action:none + user-select:none here because this zone
-  is a drag trigger; we don't want scroll or text selection interfering.
-*/
 .rank-col {
   width: 52px; min-width: 52px;
   display: flex; flex-direction: column;
@@ -214,18 +192,11 @@ html, body {
 }
 .rank-num { font-size: 24px; font-weight: 300; color: var(--accent); line-height: 1; font-variant-numeric: tabular-nums; }
 
-/* Wine body — code, tags, and notes textarea */
 .wbody { flex: 1; padding: 11px 8px 11px 0; min-width: 0; border-left: 0.5px solid var(--sep); }
 .wlabel-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .wcode   { font-size: 16px; font-weight: 500; color: var(--ink); }
 .wflight { font-size: 11px; font-weight: 500; background: var(--accent-bg); color: var(--accent); padding: 2px 8px; border-radius: 100px; }
 
-/*
-  Notes textarea — auto-resizes as the taster types.
-  touch-action:auto and user-select:text are explicit overrides to
-  ensure iOS/Firefox don't inherit any suppression from parent elements,
-  allowing double-tap to select, cursor repositioning, etc.
-*/
 .wnotes {
   width: 100%; border: none; padding: 0; margin-top: 1px;
   font-family: var(--ff); font-size: 14px; font-weight: 400;
@@ -239,12 +210,6 @@ html, body {
 .wnotes::placeholder { color: var(--ink-3); font-style: italic; }
 .wnotes:focus { color: var(--ink); }
 
-/*
-  Six-dot drag grip — right side of each card.
-  Same touch-action/user-select treatment as rank-col since
-  this is also a drag trigger zone.
-  Dots are rendered via ::before and ::after on nested <span>s.
-*/
 .drag-col {
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
@@ -260,18 +225,50 @@ html, body {
   border-radius: 50%; background: var(--ink); display: block;
 }
 
-/* Drop placeholder — dashed outline shown in the list while dragging */
 .drag-ph { border: 1.5px dashed var(--sep); border-radius: 0; background: var(--fill); }
 
 
 /* ════════════════════════════════════════
-   FINALIST CARD EXTRAS
-   The Finalists tab shows the prior flight
-   notes read-only in a shaded block, then
-   an editable textarea for new impressions.
+   FINALIST TAB
    ════════════════════════════════════════ */
 
-/* Read-only prior flight notes block in finalist cards */
+/* Loading state shown while fetching aggregate from Sheets */
+.finalist-loading {
+  background: var(--bg-card); border-radius: var(--r);
+  padding: 24px 16px; text-align: center;
+  font-size: 14px; color: var(--ink-2); line-height: 1.5; margin-bottom: 10px;
+}
+.finalist-loading .spinner {
+  display: inline-block; width: 18px; height: 18px;
+  border: 2px solid var(--sep); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin 0.7s linear infinite;
+  margin-bottom: 10px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Notice shown if using local fallback */
+.finalist-notice {
+  background: var(--bg-card); border-radius: var(--r);
+  padding: 20px 16px; text-align: center;
+  font-size: 14px; color: var(--ink-2); line-height: 1.5; margin-bottom: 10px;
+}
+.finalist-source {
+  font-size: 11px; color: var(--ink-3); text-align: center;
+  margin-bottom: 10px; font-style: italic;
+}
+
+/* Taster submission pills shown above the finalist list */
+.taster-pills {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-bottom: 12px;
+}
+.taster-pill {
+  font-size: 11px; font-weight: 500;
+  background: var(--accent-bg); color: var(--accent);
+  padding: 3px 10px; border-radius: 100px;
+}
+
+/* Prior flight notes read-only block */
 .fnotes-prior {
   font-size: 13px; color: var(--ink-2);
   background: var(--bg-input); border-radius: 6px;
@@ -283,35 +280,26 @@ html, body {
   letter-spacing: 0.07em; margin-bottom: 3px;
 }
 
-/* Notice shown in the Finalists tab if the user hasn't ranked flights yet */
-.finalist-notice {
-  background: var(--bg-card); border-radius: var(--r);
-  padding: 20px 16px; text-align: center;
-  font-size: 14px; color: var(--ink-2); line-height: 1.5; margin-bottom: 10px;
+/* Average rank badge on finalist cards */
+.avg-rank-badge {
+  font-size: 11px; font-weight: 500;
+  background: rgba(106,170,100,0.15); color: #4a8a44;
+  padding: 2px 8px; border-radius: 100px;
 }
 
 
 /* ════════════════════════════════════════
    RESULTS TAB
-   Read-only scorecard with three sections:
-   1. Finalist Flight (always expanded)
-   2. Flight I results (collapsible)
-   3. Flight II results (collapsible)
-   4. Share / export section
    ════════════════════════════════════════ */
-
-/* Results tab header with taster name and subtitle */
 .sum-hdr { padding: 22px 16px 10px; border-bottom: 0.5px solid var(--sep); margin-bottom: 4px; }
 .sum-hdr h2 { font-size: 26px; font-weight: 700; letter-spacing: -0.3px; }
 .sum-hdr p  { font-size: 13px; color: var(--ink-2); margin-top: 3px; }
 .sum-list   { padding: 8px 16px 0; }
 
-/* Card container used in the results sections */
 .scard { background: var(--bg-card); border-radius: var(--r); overflow: hidden; margin-bottom: 8px; }
 
-/* Individual wine row within a results card */
 .srow { display: flex; align-items: flex-start; gap: 10px; padding: 11px 14px; }
-.srow-sep { border-top: 0.5px solid var(--sep); } /* separator between rows */
+.srow-sep { border-top: 0.5px solid var(--sep); }
 .srow-rank { font-size: 22px; font-weight: 300; color: var(--accent); min-width: 26px; line-height: 1.2; font-variant-numeric: tabular-nums; padding-top: 1px; }
 .srow-body { flex: 1; min-width: 0; }
 .srow-title { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -319,21 +307,17 @@ html, body {
 .srow-note  { font-size: 14px; color: var(--ink-2); line-height: 1.45; }
 .srow-empty { font-size: 13px; color: var(--ink-3); font-style: italic; }
 
-/* Flight/finalist tag pill — reused in results rows */
 .scard-tag { font-size: 11px; font-weight: 500; background: var(--accent-bg); color: var(--accent); padding: 2px 8px; border-radius: 100px; }
 
-/* Collapsible section headers (Flight I / Flight II in Results) */
 .sum-sec-hdr {
   display: flex; align-items: center; justify-content: space-between;
   padding: 18px 2px 8px; cursor: default;
 }
 .sum-sec-hdr.collapsible { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .sum-sec-lbl  { font-size: 12px; font-weight: 600; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.06em; }
-/* Chevron rotates 90° when section is collapsed */
 .sum-sec-chev { font-size: 18px; color: var(--ink-3); transition: transform 0.2s; display: inline-block; line-height: 1; }
-.sec-body { display: block; } /* toggled to none/block by toggleSection() */
+.sec-body { display: block; }
 
-/* Export / share section at the bottom of the Results tab */
 .export-wrap { padding: 8px 16px 16px; }
 .export-box  {
   background: var(--bg-card); border-radius: var(--r-sm);
@@ -342,7 +326,6 @@ html, body {
   font-size: 11.5px; color: var(--ink-2);
   white-space: pre; overflow-x: auto; line-height: 1.75;
 }
-/* Copy button — <div> instead of <button> for iOS tap reliability */
 .copy-btn {
   display: block; width: 100%; margin-top: 8px; padding: 14px;
   background: var(--accent); color: #fff; border: none;
@@ -354,7 +337,7 @@ html, body {
 .copy-btn:active { opacity: 0.75; }
 
 
-/* ── Responsive: center content on wider screens ── */
+/* ── Responsive ── */
 @media (min-width: 560px) {
   .panel, .sum-hdr, .sum-list, .export-wrap {
     max-width: 540px;
@@ -368,7 +351,7 @@ html, body {
 <body>
 
 <!-- ══════════════════════════════════════
-     HEADER — always visible, sticky
+     HEADER
      ══════════════════════════════════════ -->
 <header class="hdr">
   <div class="hdr-eye">The Sonoma Six · Blind Tasting</div>
@@ -379,14 +362,12 @@ html, body {
 
 <!-- ══════════════════════════════════════
      SETUP SCREEN
-     Shown on load. Hidden by beginTasting().
      ══════════════════════════════════════ -->
 <div id="setup">
   <div class="setup-inner">
     <p class="setup-title">Welcome.</p>
     <p class="setup-sub">Select your name to begin. You'll rank all 10 wines and add tasting notes as you go.</p>
 
-    <!-- Pre-loaded taster name chips -->
     <p class="sec-lbl">Who's tasting?</p>
     <div class="chip-grid">
       <div class="chip" onclick="pickName(this,'Katie')">Katie</div>
@@ -397,7 +378,6 @@ html, body {
       <div class="chip" onclick="pickName(this,'Joe')">Joe</div>
     </div>
 
-    <!-- Free-text fallback for guests -->
     <p class="sec-lbl">Or type your name</p>
     <div class="name-wrap">
       <input class="name-input" id="name-in" type="text" placeholder="Name…"
@@ -405,7 +385,6 @@ html, body {
         oninput="typeName(this.value)">
     </div>
 
-    <!-- Revealed by JS once a name is set -->
     <div class="go-btn" id="go-btn" onclick="beginTasting()">Begin tasting</div>
   </div>
 </div>
@@ -413,16 +392,18 @@ html, body {
 
 <!-- ══════════════════════════════════════
      TASTING SCREEN
-     Shown after beginTasting(). Contains
-     the segmented control and all four panels.
      ══════════════════════════════════════ -->
 <div id="tasting">
 
-  <!-- Taster name + notes progress bar -->
+  <!-- Taster name + progress + sync status -->
   <div class="tbar">
     <div class="tbar-name">Tasting as <strong id="tname"></strong></div>
     <div class="prog-wrap"><div class="prog-fill" id="prog" style="width:0%"></div></div>
     <div class="prog-lbl" id="prog-lbl">0 / 10</div>
+    <!-- Sync dot: shows cloud save status -->
+    <div class="sync-status">
+      <div class="sync-dot" id="sync-dot"></div>
+    </div>
   </div>
 
   <!-- Four-segment tab control -->
@@ -435,29 +416,32 @@ html, body {
     </div>
   </div>
 
-  <!-- PANEL 0: Flight I — wines A–E -->
+  <!-- PANEL 0: Flight I -->
   <div class="panel on" id="p0">
     <p class="panel-hint">Drag to rank · add notes below each wine</p>
     <ul class="wine-list" id="list-0"></ul>
   </div>
 
-  <!-- PANEL 1: Flight II — wines F–J -->
+  <!-- PANEL 1: Flight II -->
   <div class="panel" id="p1">
     <p class="panel-hint">Drag to rank · add notes below each wine</p>
     <ul class="wine-list" id="list-1"></ul>
   </div>
 
-  <!-- PANEL 2: Finalists — top 2 from each flight, auto-populated -->
+  <!-- PANEL 2: Finalists — driven by group aggregate from Sheets -->
   <div class="panel" id="p2">
-    <p class="panel-hint">Top 2 from each flight — drag to rank your four finalists</p>
-    <!-- Shown if flights haven't been ranked yet -->
-    <div class="finalist-notice" id="finalist-notice" style="display:none;">
-      <p>Complete Flight I and Flight II rankings first — the top 2 from each will appear here.</p>
+    <p class="panel-hint">Top 4 across the group — drag to set your personal order</p>
+    <div id="finalist-loading" class="finalist-loading" style="display:none;">
+      <div class="spinner"></div>
+      <div>Fetching group results…</div>
     </div>
+    <div id="finalist-notice" class="finalist-notice" style="display:none;"></div>
+    <div id="finalist-source" class="finalist-source" style="display:none;"></div>
+    <div id="taster-pills" class="taster-pills" style="display:none;"></div>
     <ul class="wine-list" id="list-2"></ul>
   </div>
 
-  <!-- PANEL 3: Results — read-only scorecard + export -->
+  <!-- PANEL 3: Results -->
   <div class="panel" id="p3">
     <div class="sum-hdr">
       <h2 id="sum-name"></h2>
@@ -465,7 +449,6 @@ html, body {
     </div>
     <div class="sum-list" id="sum-cards"></div>
     <div class="export-wrap">
-      <!-- Section header for share area (not collapsible) -->
       <div class="sum-sec-hdr"><span class="sum-sec-lbl">Share Results</span></div>
       <div class="export-box" id="export-box"></div>
       <div class="copy-btn" onclick="doCopy()">Copy to clipboard</div>
@@ -481,15 +464,17 @@ html, body {
 <script>
 
 /* ════════════════════════════════════════
-   STATE
-   All mutable state lives here. Persisted
-   to localStorage keyed by taster name.
+   CONFIGURATION
+   Paste your deployed Apps Script URL here.
    ════════════════════════════════════════ */
+var SCRIPT_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
 
-var taster = '';  // current taster's name
 
-// Ten wines: 5 per flight. id = blind code (A–J), flight = 0 or 1,
-// rank = position within the full set (1–10), notes = tasting notes string.
+/* ════════════════════════════════════════
+   STATE
+   ════════════════════════════════════════ */
+var taster = '';
+
 var wines = [
   {id:'A', flight:0, rank:1,  notes:''},
   {id:'B', flight:0, rank:2,  notes:''},
@@ -503,27 +488,92 @@ var wines = [
   {id:'J', flight:1, rank:10, notes:''}
 ];
 
-// Finalist array: [{id, finalistRank, notes}]
-// Populated by deriveFinalists() from top 2 of each flight.
-// Kept separate from wines so finalist notes don't overwrite flight notes.
+// Finalist array: [{id, finalistRank, notes, avgRank}]
+// avgRank is populated from the Sheets aggregate; falls back to local rank.
 var finalists = [];
 
-var curTab = 0; // index of the currently active panel (0–3)
+var curTab = 0;
 
-// Drag state — shared between mouse and touch drag handlers
-var ph = null;      // placeholder <li> shown in the list while dragging
-var tItem  = null;  // card being touch-dragged
-var tClone = null;  // floating visual clone shown under the finger
-var tOffY  = 0;     // touch offset from card top edge
-var tOffX  = 0;     // touch offset from card left edge
+// Drag state
+var ph = null, tItem = null, tClone = null, tOffY = 0, tOffX = 0;
+
+// Debounce handle for backend sync (avoids hammering Sheets on every drag pixel)
+var syncTimer = null;
+
+
+/* ════════════════════════════════════════
+   SYNC — Google Sheets backend
+   ════════════════════════════════════════ */
+
+/**
+ * Sets the sync dot state.
+ * state: 'idle' | 'syncing' | 'synced' | 'error'
+ */
+function setSyncState(state) {
+  var dot = document.getElementById('sync-dot');
+  dot.className = 'sync-dot' + (state !== 'idle' ? ' ' + state : '');
+}
+
+/**
+ * Pushes the current taster's full ranking + notes to the Apps Script backend.
+ * Debounced — waits 800ms after the last change before firing, so rapid
+ * drag interactions don't send a request per move.
+ *
+ * Falls back silently if SCRIPT_URL is not configured or the request fails;
+ * localStorage is always written regardless.
+ */
+function syncToSheets() {
+  if (!SCRIPT_URL || SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') return;
+
+  clearTimeout(syncTimer);
+  setSyncState('syncing');
+
+  syncTimer = setTimeout(function() {
+    var payload = {
+      taster:   taster,
+      rankings: wines.map(function(w) { return { id: w.id, rank: w.rank }; }),
+      notes:    wines.map(function(w) { return { id: w.id, notes: w.notes }; })
+    };
+
+    fetch(SCRIPT_URL, {
+      method:  'POST',
+      // Apps Script requires text/plain for CORS-safe POST (no preflight)
+      headers: { 'Content-Type': 'text/plain' },
+      body:    JSON.stringify(payload)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      setSyncState(data.ok ? 'synced' : 'error');
+      // Reset dot to idle after 3 seconds
+      setTimeout(function() { setSyncState('idle'); }, 3000);
+    })
+    .catch(function() {
+      setSyncState('error');
+      setTimeout(function() { setSyncState('idle'); }, 3000);
+    });
+  }, 800);
+}
+
+/**
+ * Fetches the group aggregate from the Apps Script backend.
+ * Returns a Promise resolving to:
+ *   { ok: true, tasters: [...], aggregate: [{id, avgRank, submissions}] }
+ * or { ok: false, error: '...' } on failure.
+ */
+function fetchAggregate() {
+  if (!SCRIPT_URL || SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
+    return Promise.resolve({ ok: false, error: 'not_configured' });
+  }
+  return fetch(SCRIPT_URL + '?action=aggregate')
+    .then(function(r) { return r.json(); })
+    .catch(function() { return { ok: false, error: 'network' }; });
+}
 
 
 /* ════════════════════════════════════════
    SETUP
    ════════════════════════════════════════ */
 
-// Called when a name chip is tapped. Clears any typed name, marks the
-// chip selected, sets the taster, and reveals the "Begin tasting" button.
 function pickName(el, name) {
   document.querySelectorAll('.chip').forEach(function(c) { c.classList.remove('on'); });
   el.classList.add('on');
@@ -532,20 +582,14 @@ function pickName(el, name) {
   document.getElementById('go-btn').style.display = 'block';
 }
 
-// Called on every keystroke in the free-text input. Deselects chips,
-// updates taster, shows/hides the begin button based on whether input is non-empty.
 function typeName(val) {
   document.querySelectorAll('.chip').forEach(function(c) { c.classList.remove('on'); });
   taster = val.trim();
   document.getElementById('go-btn').style.display = taster ? 'block' : 'none';
 }
 
-// Transitions from setup screen to tasting screen.
-// Loads any previously saved state from localStorage for this taster,
-// then renders all flights and shows the tasting UI.
 function beginTasting() {
   if (!taster) return;
-  // Attempt to restore a previous session for this taster
   try {
     var saved = localStorage.getItem('gc_' + taster);
     if (saved) {
@@ -553,7 +597,7 @@ function beginTasting() {
       wines     = s.wines     || wines;
       finalists = s.finalists || [];
     }
-  } catch(e) { /* ignore localStorage errors (private browsing, quota, etc.) */ }
+  } catch(e) {}
 
   document.getElementById('setup').style.display  = 'none';
   document.getElementById('tasting').style.display = 'block';
@@ -561,15 +605,14 @@ function beginTasting() {
   renderAll();
 }
 
-// Persists current wines and finalists arrays to localStorage under the taster's name.
-// Called after every ranking change and every note update.
 function save() {
   try {
     localStorage.setItem('gc_' + taster, JSON.stringify({wines: wines, finalists: finalists}));
-  } catch(e) { /* ignore */ }
+  } catch(e) {}
+  // Also push to Sheets backend (debounced)
+  syncToSheets();
 }
 
-// Utility: find a wine object by its blind code id
 function getWine(id) {
   return wines.filter(function(w) { return w.id === id; })[0];
 }
@@ -577,17 +620,40 @@ function getWine(id) {
 
 /* ════════════════════════════════════════
    FINALIST DERIVATION
-   Reads the current flight rankings to
-   determine which 4 wines advance.
+   Two sources, with clear precedence:
+   1. Group aggregate from Sheets (preferred) — top 4 by avgRank
+   2. Local fallback — top 2 from each flight by this taster's own rankings
    ════════════════════════════════════════ */
 
-// Computes the finalist list from the top 2 wines in each flight.
-// Preserves any existing finalist notes and ranks if a wine was already
-// in the finalist list; otherwise initialises a fresh entry.
-// Always called fresh when the Finalists tab is opened, so it stays
-// in sync with any ranking changes made after the tab was last viewed.
-function deriveFinalists() {
-  // Sort each flight by rank and take the top 2
+/**
+ * Builds the finalists array from the Sheets aggregate response.
+ * Takes the top 4 wines by avgRank (lower = better), preserving any
+ * finalist notes the taster has already entered.
+ */
+function deriveFinalistsFromAggregate(aggregate) {
+  var top4 = aggregate.slice(0, 4); // already sorted by avgRank asc
+
+  var newFin = top4.map(function(agg, i) {
+    var existing = finalists.filter(function(f) { return f.id === agg.id; })[0];
+    return {
+      id:            agg.id,
+      finalistRank:  existing ? existing.finalistRank : i + 1,
+      notes:         existing ? existing.notes : '',
+      avgRank:       agg.avgRank,
+      submissions:   agg.submissions
+    };
+  });
+
+  newFin.sort(function(a, b) { return a.finalistRank - b.finalistRank; });
+  newFin.forEach(function(f, i) { f.finalistRank = i + 1; });
+  finalists = newFin;
+}
+
+/**
+ * Local fallback: top 2 from each flight by this taster's own rankings.
+ * Used when the backend is unreachable or not yet configured.
+ */
+function deriveFinalistsLocal() {
   var f0 = wines.filter(function(w) { return w.flight === 0; })
                 .sort(function(a, b) { return a.rank - b.rank; })
                 .slice(0, 2);
@@ -596,14 +662,13 @@ function deriveFinalists() {
                 .slice(0, 2);
 
   var top4 = [f0[0], f0[1], f1[0], f1[1]];
-
   var newFin = top4.map(function(w, i) {
-    // Preserve existing entry if this wine was already a finalist
     var existing = finalists.filter(function(f) { return f.id === w.id; })[0];
-    return existing ? existing : {id: w.id, finalistRank: i + 1, notes: ''};
+    return existing
+      ? existing
+      : { id: w.id, finalistRank: i + 1, notes: '', avgRank: null, submissions: 0 };
   });
 
-  // Ensure finalistRank values are sequential 1–4 based on current order
   newFin.sort(function(a, b) { return a.finalistRank - b.finalistRank; });
   newFin.forEach(function(f, i) { f.finalistRank = i + 1; });
   finalists = newFin;
@@ -614,15 +679,12 @@ function deriveFinalists() {
    RENDER
    ════════════════════════════════════════ */
 
-// Renders both flight panels and updates the progress bar.
-// Called once on startup and after loading saved state.
 function renderAll() {
   renderFlight(0);
   renderFlight(1);
   updateProg();
 }
 
-// Clears and rebuilds the wine card list for the given flight (0 or 1).
 function renderFlight(f) {
   var list = document.getElementById('list-' + f);
   list.innerHTML = '';
@@ -631,24 +693,63 @@ function renderFlight(f) {
        .forEach(function(w) { list.appendChild(makeCard(w)); });
 }
 
-// Derives finalists and rebuilds the finalist card list.
-// Called each time the Finalists tab is opened so it always reflects
-// the latest Flight I / II rankings.
+/**
+ * Renders the Finalists tab. Fetches the group aggregate from Sheets,
+ * falls back to local derivation on error. Shows a loading spinner
+ * while the fetch is in flight.
+ */
 function renderFinalists() {
-  var list   = document.getElementById('list-2');
-  var notice = document.getElementById('finalist-notice');
-  list.innerHTML = '';
-  deriveFinalists();
-  notice.style.display = 'none'; // hide the "rank first" notice
-  finalists.sort(function(a, b) { return a.finalistRank - b.finalistRank; });
-  finalists.forEach(function(f) { list.appendChild(makeFinalistCard(f)); });
+  var list        = document.getElementById('list-2');
+  var loading     = document.getElementById('finalist-loading');
+  var notice      = document.getElementById('finalist-notice');
+  var sourceEl    = document.getElementById('finalist-source');
+  var pillsEl     = document.getElementById('taster-pills');
+
+  // Clear previous state
+  list.innerHTML   = '';
+  notice.style.display  = 'none';
+  sourceEl.style.display = 'none';
+  pillsEl.style.display  = 'none';
+  loading.style.display  = 'block';
+
+  fetchAggregate().then(function(data) {
+    loading.style.display = 'none';
+
+    if (data.ok && data.aggregate && data.aggregate.length >= 4) {
+      // ── Group aggregate path ──
+      deriveFinalistsFromAggregate(data.aggregate);
+
+      // Show which tasters have submitted
+      if (data.tasters && data.tasters.length > 0) {
+        pillsEl.style.display = 'flex';
+        pillsEl.innerHTML = data.tasters.map(function(t) {
+          return '<span class="taster-pill">' + t + '</span>';
+        }).join('');
+      }
+
+      sourceEl.style.display = 'block';
+      sourceEl.textContent = 'Based on ' + (data.tasters ? data.tasters.length : '?') + ' submission' + (data.tasters && data.tasters.length !== 1 ? 's' : '');
+
+    } else {
+      // ── Local fallback path ──
+      deriveFinalistsLocal();
+
+      notice.style.display = 'block';
+      if (data.error === 'not_configured') {
+        notice.textContent = 'Backend not configured — showing your personal top 4. Add SCRIPT_URL to enable group results.';
+      } else {
+        notice.textContent = 'Couldn\'t reach the group backend — showing your personal top 4 as a fallback.';
+      }
+    }
+
+    // Render the finalist cards regardless of which path was taken
+    finalists.sort(function(a, b) { return a.finalistRank - b.finalistRank; });
+    finalists.forEach(function(f) { list.appendChild(makeFinalistCard(f)); });
+    save(); // persist the derived finalists to localStorage
+  });
 }
 
-// Builds a draggable wine card <li> for Flight I or II.
-// Shows the local rank (position within the flight), wine code, flight tag,
-// and a notes textarea that auto-resizes and saves on every keystroke.
 function makeCard(wine) {
-  // Local rank: position of this wine within its own flight (1–5)
   var fw = wines.filter(function(w) { return w.flight === wine.flight; })
                 .sort(function(a, b) { return a.rank - b.rank; });
   var lr = fw.indexOf(wine) + 1;
@@ -670,7 +771,6 @@ function makeCard(wine) {
     '</div>' +
     '<div class="drag-col"><span></span><span></span><span></span></div>';
 
-  // Save notes on every keystroke; auto-resize the textarea to fit content
   li.querySelector('.wnotes').addEventListener('input', function() {
     var id = this.dataset.id;
     wines.forEach(function(w) { if (w.id === id) w.notes = this.value; }, this);
@@ -684,17 +784,19 @@ function makeCard(wine) {
   return li;
 }
 
-// Builds a draggable finalist card <li> for the Finalists tab.
-// Shows the original flight notes read-only (for reference during re-taste),
-// plus a separate editable textarea for fresh finalist impressions.
 function makeFinalistCard(fin) {
   var wine = getWine(fin.id);
   var flightLabel = (wine && wine.flight === 0) ? 'I' : 'II';
 
+  // Build the avg rank badge text if we have Sheets data
+  var avgBadge = (fin.avgRank !== null && fin.avgRank !== undefined && fin.avgRank < 999)
+    ? '<span class="avg-rank-badge">avg rank ' + fin.avgRank.toFixed(1) + '</span>'
+    : '';
+
   var li = document.createElement('li');
-  li.className       = 'wcard';
-  li.dataset.id      = fin.id;
-  li.dataset.finalist = '1'; // flag so drag-end knows to call rerankFinalists()
+  li.className        = 'wcard';
+  li.dataset.id       = fin.id;
+  li.dataset.finalist = '1';
 
   li.innerHTML =
     '<div class="rank-col"><span class="rank-num">' + fin.finalistRank + '</span></div>' +
@@ -703,22 +805,20 @@ function makeFinalistCard(fin) {
         '<span class="wcode">Wine ' + fin.id + '</span>' +
         '<span class="wflight">Flight ' + flightLabel + '</span>' +
         '<span class="wflight" style="background:rgba(180,140,60,0.15);color:#8a6a20;">Finalist</span>' +
+        avgBadge +
       '</div>' +
-      // Prior flight notes shown as a read-only shaded block (if any exist)
       (wine && wine.notes
         ? '<div class="fnotes-prior">' +
-            '<span class="fnotes-prior-lbl">Flight ' + flightLabel + ' notes</span>' +
+            '<span class="fnotes-prior-lbl">Your Flight ' + flightLabel + ' notes</span>' +
             wine.notes +
           '</div>'
         : '') +
-      // Separate editable textarea for new finalist impressions
       '<textarea class="wnotes" placeholder="Finalist notes\u2026" rows="2" data-id="' + fin.id + '">' +
         fin.notes +
       '</textarea>' +
     '</div>' +
     '<div class="drag-col"><span></span><span></span><span></span></div>';
 
-  // Save finalist notes separately — doesn't overwrite original flight notes
   li.querySelector('.wnotes').addEventListener('input', function() {
     var id = this.dataset.id;
     finalists.forEach(function(f) { if (f.id === id) f.notes = this.value; }, this);
@@ -731,10 +831,6 @@ function makeFinalistCard(fin) {
   return li;
 }
 
-// Attaches drag listeners to the rank column and drag handle of a card.
-// Crucially, listeners are on the handle elements ONLY — never on the card
-// itself — so the textarea in .wbody receives all touch/mouse events natively,
-// enabling text selection, cursor repositioning, and double-tap to select.
 function bindDrag(li) {
   var handles = li.querySelectorAll('.drag-col, .rank-col');
   handles.forEach(function(h) {
@@ -743,13 +839,11 @@ function bindDrag(li) {
   });
 }
 
-// Updates the progress bar and counter based on how many wines have notes.
-// Max denominator includes finalist notes once the finalist list is populated.
 function updateProg() {
   var n   = wines.filter(function(w) { return w.notes.trim().length > 0; }).length;
   var fn  = finalists.filter(function(f) { return f.notes.trim().length > 0; }).length;
   var total = n + fn;
-  var max   = 10 + finalists.length; // 10 flight wines + up to 4 finalists
+  var max   = 10 + finalists.length;
   document.getElementById('prog').style.width    = (total / max * 100) + '%';
   document.getElementById('prog-lbl').textContent = total + ' / ' + max;
 }
@@ -759,29 +853,20 @@ function updateProg() {
    NAVIGATION
    ════════════════════════════════════════ */
 
-// Switches the active panel when a segment button is tapped.
-// Renders the Finalists or Results tab on demand (not pre-rendered)
-// so they always reflect the latest ranking state.
 function showTab(idx) {
   document.querySelectorAll('.seg-btn').forEach(function(b, i) { b.classList.toggle('on', i === idx); });
   document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('on'); });
   document.getElementById('p' + idx).classList.add('on');
-  if (idx === 2) renderFinalists(); // re-derive finalists each time tab is opened
-  if (idx === 3) renderSummary();   // rebuild results each time tab is opened
+  if (idx === 2) renderFinalists(); // fetches aggregate fresh each time
+  if (idx === 3) renderSummary();
   curTab = idx;
 }
 
 
 /* ════════════════════════════════════════
    RE-RANKING
-   After a drag completes, read the current
-   DOM order and write it back to the wines
-   or finalists arrays.
    ════════════════════════════════════════ */
 
-// Updates wines array ranks from the DOM order of a flight list.
-// g = global rank offset (1 for flight 0, 6 for flight 1)
-// lr = local rank label shown on the card (always 1–5)
 function rerank(listEl, f) {
   var cards = listEl.querySelectorAll('.wcard');
   var g = (f === 0) ? 1 : 6;
@@ -795,7 +880,6 @@ function rerank(listEl, f) {
   save();
 }
 
-// Updates the finalists array ranks from the DOM order of the finalist list.
 function rerankFinalists(listEl) {
   listEl.querySelectorAll('.wcard').forEach(function(c, i) {
     var f = finalists.filter(function(x) { return x.id === c.dataset.id; })[0];
@@ -809,40 +893,32 @@ function rerankFinalists(listEl) {
 
 /* ════════════════════════════════════════
    MOUSE DRAG (desktop)
-   Triggered by mousedown on handle/rank.
-   Tracks movement globally on document so
-   the drag doesn't break if cursor leaves
-   the card area during movement.
    ════════════════════════════════════════ */
 var msItem = null, msClone = null, msPh = null, msOffX = 0, msOffY = 0;
 
 function msDragStart(e, card) {
-  if (e.button !== 0) return; // left button only
+  if (e.button !== 0) return;
   e.preventDefault();
   msItem = card;
   var r = card.getBoundingClientRect();
   msOffX = e.clientX - r.left;
   msOffY = e.clientY - r.top;
-  // Floating clone that follows the cursor
   msClone = card.cloneNode(true);
   msClone.style.cssText = 'position:fixed;top:' + r.top + 'px;left:' + r.left + 'px;width:' + r.width + 'px;z-index:9999;pointer-events:none;opacity:0.9;transform:scale(1.02);box-shadow:0 8px 28px rgba(0,0,0,0.15);border-radius:12px;background:var(--bg-card);transition:none;';
   document.body.appendChild(msClone);
-  // Placeholder occupies the original position in the list
   msPh = document.createElement('li');
   msPh.className  = 'drag-ph';
   msPh.style.height = r.height + 'px';
   card.parentNode.insertBefore(msPh, card);
-  card.style.visibility = 'hidden'; // hide original (placeholder takes its space)
+  card.style.visibility = 'hidden';
   document.addEventListener('mousemove', msDragMove);
   document.addEventListener('mouseup',   msDragEnd);
 }
 
 function msDragMove(e) {
   if (!msItem) return;
-  // Move clone with cursor
   msClone.style.top  = (e.clientY - msOffY) + 'px';
   msClone.style.left = (e.clientX - msOffX) + 'px';
-  // Find the card under the cursor and reposition the placeholder
   var el = document.elementFromPoint(e.clientX, e.clientY);
   if (!el) return;
   var target = el.closest('.wcard');
@@ -858,7 +934,6 @@ function msDragEnd() {
   document.removeEventListener('mousemove', msDragMove);
   document.removeEventListener('mouseup',   msDragEnd);
   if (!msItem) return;
-  // Restore card, remove clone, remove placeholder
   msItem.style.visibility = '';
   if (msPh && msPh.parentNode) {
     msPh.parentNode.insertBefore(msItem, msPh);
@@ -868,7 +943,6 @@ function msDragEnd() {
   var list = msItem.closest('.wine-list');
   var isF  = msItem.dataset.finalist;
   msItem = null; msPh = null;
-  // Write new order back to data
   if (isF) rerankFinalists(list);
   else rerank(list, list.id === 'list-0' ? 0 : 1);
 }
@@ -876,10 +950,6 @@ function msDragEnd() {
 
 /* ════════════════════════════════════════
    TOUCH DRAG (mobile)
-   Same logic as mouse drag but using the
-   Touch API. touchmove/touchend are added
-   to document on drag start and removed on
-   drag end to avoid stale listeners.
    ════════════════════════════════════════ */
 
 function tsDragStart(e, card) {
@@ -889,27 +959,24 @@ function tsDragStart(e, card) {
   var r = card.getBoundingClientRect();
   tOffY = t.clientY - r.top;
   tOffX = t.clientX - r.left;
-  // Floating clone that follows the finger
   tClone = card.cloneNode(true);
   tClone.style.cssText = 'position:fixed;top:' + r.top + 'px;left:' + r.left + 'px;width:' + r.width + 'px;z-index:9999;pointer-events:none;opacity:0.9;transform:scale(1.02);box-shadow:0 8px 28px rgba(0,0,0,0.15);border-radius:12px;background:var(--bg-card);transition:none;';
   document.body.appendChild(tClone);
-  // Placeholder in the list
   ph = document.createElement('li');
   ph.className  = 'drag-ph';
   ph.style.height = r.height + 'px';
   card.parentNode.insertBefore(ph, card);
-  card.style.display = 'none'; // hide original
+  card.style.display = 'none';
   document.addEventListener('touchmove', tsDragMove, {passive: false});
   document.addEventListener('touchend',  tsDragEnd);
 }
 
 function tsDragMove(e) {
   if (!tItem) return;
-  e.preventDefault(); // prevent page scroll during drag
+  e.preventDefault();
   var t = e.touches[0];
   tClone.style.top  = (t.clientY - tOffY) + 'px';
   tClone.style.left = (t.clientX - tOffX) + 'px';
-  // Reposition placeholder based on where the finger is hovering
   var el = document.elementFromPoint(t.clientX, t.clientY);
   if (!el) return;
   var target = el.closest('.wcard');
@@ -925,7 +992,6 @@ function tsDragEnd() {
   document.removeEventListener('touchmove', tsDragMove);
   document.removeEventListener('touchend',  tsDragEnd);
   if (!tItem) return;
-  // Restore card
   tItem.style.display = '';
   if (ph && ph.parentNode) {
     ph.parentNode.insertBefore(tItem, ph);
@@ -935,7 +1001,6 @@ function tsDragEnd() {
   var list = tItem.closest('.wine-list');
   var isF  = tItem.dataset.finalist;
   tItem = null; ph = null;
-  // Write new order back to data
   if (isF) rerankFinalists(list);
   else rerank(list, list.id === 'list-0' ? 0 : 1);
 }
@@ -943,21 +1008,14 @@ function tsDragEnd() {
 
 /* ════════════════════════════════════════
    RESULTS TAB
-   Builds the full read-only scorecard:
-   1. Finalist Flight (always expanded)
-   2. Flight I (collapsible)
-   3. Flight II (collapsible)
-   4. Share / export (always expanded)
    ════════════════════════════════════════ */
 
-// Rebuilds the entire Results tab content.
-// Called each time the Results tab is opened.
 function renderSummary() {
   document.getElementById('sum-name').textContent = taster + '\u2019s Scorecard';
   var c = document.getElementById('sum-cards');
   c.innerHTML = '';
 
-  // ── Section 1: Finalist Flight ──
+  // ── Finalist Flight ──
   c.appendChild(mkSecHdr('Finalist Flight', null, false));
   if (finalists.length === 4) {
     var fcard = document.createElement('div');
@@ -974,12 +1032,13 @@ function renderSummary() {
             '<div class="srow-title">Wine ' + fin.id +
               ' <span class="scard-tag">Flight ' + fl + '</span>' +
               ' <span class="scard-tag" style="background:rgba(180,140,60,0.15);color:#8a6a20;">Finalist</span>' +
+              (fin.avgRank !== null && fin.avgRank < 999
+                ? ' <span class="avg-rank-badge">avg rank ' + fin.avgRank.toFixed(1) + '</span>'
+                : '') +
             '</div>' +
-            // Show original flight notes if present
             (wine && wine.notes
               ? '<div class="srow-note-lbl">Flight ' + fl + ' notes</div><div class="srow-note">' + wine.notes + '</div>'
               : '') +
-            // Show finalist notes if present
             (fin.notes
               ? '<div class="srow-note-lbl">Finalist notes</div><div class="srow-note">' + fin.notes + '</div>'
               : (!wine || !wine.notes ? '<div class="srow-empty">No notes</div>' : '')) +
@@ -988,49 +1047,40 @@ function renderSummary() {
       });
     c.appendChild(fcard);
   } else {
-    // Finalists not yet determined
     var nd = document.createElement('div');
     nd.className = 'scard';
-    nd.innerHTML = '<div style="padding:14px;font-size:14px;color:var(--ink-3);font-style:italic;">Complete Flights I and II to populate the Finalist Flight.</div>';
+    nd.innerHTML = '<div style="padding:14px;font-size:14px;color:var(--ink-3);font-style:italic;">Open the Finalists tab to populate the Finalist Flight.</div>';
     c.appendChild(nd);
   }
 
-  // ── Section 2: Flight I (collapsible) ──
+  // ── Flight I ──
   var f0wines = wines.filter(function(w) { return w.flight === 0; })
                      .sort(function(a, b) { return a.rank - b.rank; });
   c.appendChild(mkSecHdr('Flight I \u2014 5 Wines', 'sec-f0', true));
   c.appendChild(mkFlightSection(f0wines, 'sec-f0'));
 
-  // ── Section 3: Flight II (collapsible) ──
+  // ── Flight II ──
   var f1wines = wines.filter(function(w) { return w.flight === 1; })
                      .sort(function(a, b) { return a.rank - b.rank; });
   c.appendChild(mkSecHdr('Flight II \u2014 5 Wines', 'sec-f1', true));
   c.appendChild(mkFlightSection(f1wines, 'sec-f1'));
 
-  // Build the export text now that all sections are rendered
   buildExport();
 }
 
-// Creates a section header div. If collapsible=true, clicking it
-// toggles the corresponding section body and rotates the chevron.
 function mkSecHdr(label, collapseId, collapsible) {
   var d = document.createElement('div');
   d.className = 'sum-sec-hdr' + (collapsible ? ' collapsible' : '');
   d.innerHTML =
     '<span class="sum-sec-lbl">' + label + '</span>' +
     (collapsible ? '<span class="sum-sec-chev" id="chev-' + collapseId + '">&#8964;</span>' : '');
-  if (collapsible) {
-    d.onclick = function() { toggleSection(collapseId); };
-  }
+  if (collapsible) d.onclick = function() { toggleSection(collapseId); };
   return d;
 }
 
-// Builds the collapsible section body for a flight's results.
-// Each wine gets a row with its local rank, code, and notes.
 function mkFlightSection(winesArr, id) {
   var wrap = document.createElement('div');
-  wrap.id        = id;
-  wrap.className = 'sec-body'; // toggled by toggleSection()
+  wrap.id = id; wrap.className = 'sec-body';
   var card = document.createElement('div');
   card.className = 'scard';
   winesArr.forEach(function(wine, i) {
@@ -1050,8 +1100,6 @@ function mkFlightSection(winesArr, id) {
   return wrap;
 }
 
-// Toggles a collapsible section open/closed.
-// Rotates the chevron icon to indicate state.
 function toggleSection(id) {
   var el   = document.getElementById(id);
   var chev = document.getElementById('chev-' + id);
@@ -1061,9 +1109,6 @@ function toggleSection(id) {
   if (chev) chev.style.transform = collapsed ? 'rotate(0deg)' : 'rotate(-90deg)';
 }
 
-// Assembles the plain-text export string from all rankings and notes.
-// Output is: Finalist Flight → Flight I → Flight II.
-// This is what gets copied to clipboard via doCopy().
 function buildExport() {
   var date = new Date().toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
   var txt  = "GAP'S CROWN VINEYARD \u2014 2023 PINOT NOIR BLIND TASTING\n";
@@ -1075,7 +1120,8 @@ function buildExport() {
       .forEach(function(f, i) {
         var wine = getWine(f.id);
         txt += '#' + String(i + 1).padStart(2, '0') + '  Wine ' + f.id +
-               '  [Flight ' + (wine && wine.flight === 0 ? 'I' : 'II') + ']\n';
+               '  [Flight ' + (wine && wine.flight === 0 ? 'I' : 'II') + ']' +
+               (f.avgRank !== null && f.avgRank < 999 ? '  avg rank ' + f.avgRank.toFixed(1) : '') + '\n';
         if (wine && wine.notes) txt += '     Flight notes: ' + wine.notes + '\n';
         if (f.notes)            txt += '     Finalist notes: ' + f.notes + '\n';
       });
@@ -1100,8 +1146,6 @@ function buildExport() {
   document.getElementById('export-box').textContent = txt.trim();
 }
 
-// Copies the export text to the clipboard.
-// Uses the modern Clipboard API with a fallback to execCommand for older browsers.
 function doCopy() {
   var text = document.getElementById('export-box').textContent;
   var btn  = document.querySelector('.copy-btn');
@@ -1112,7 +1156,6 @@ function doCopy() {
   try {
     navigator.clipboard.writeText(text).then(done);
   } catch(e) {
-    // Fallback: create a temporary textarea, select its content, copy it
     var ta = document.createElement('textarea');
     ta.value = text;
     ta.style.cssText = 'position:fixed;opacity:0;';
