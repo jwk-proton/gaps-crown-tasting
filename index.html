@@ -390,6 +390,10 @@ html, body {
       <div class="chip" onclick="pickName(this,'Jason')">Jason</div>
       <div class="chip" onclick="pickName(this,'Therese')">Therese</div>
       <div class="chip" onclick="pickName(this,'Joe')">Joe</div>
+      <div class="chip" onclick="pickName(this,'Steve')">Steve</div>
+      <div class="chip" onclick="pickName(this,'Laura')">Laura</div>
+      <div class="chip" onclick="pickName(this,'Louie')">Louie</div>
+      <div class="chip" onclick="pickName(this,'Suzanne')">Suzanne</div>
     </div>
 
     <p class="sec-lbl">Or type your name</p>
@@ -491,7 +495,7 @@ html, body {
    CONFIGURATION
    Paste your deployed Apps Script URL here.
    ════════════════════════════════════════ */
-var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbztguizO0QlDgqknqZK4flr_2f_w3A58w8bSlJjgj9R0sXK7L_a4JEkbz2eAcHH7OMZog/exec';
+var SCRIPT_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
 
 
 /* ════════════════════════════════════════
@@ -556,7 +560,8 @@ function syncToSheets() {
     var payload = {
       taster:   taster,
       rankings: wines.map(function(w) { return { id: w.id, rank: w.rank }; }),
-      notes:    wines.map(function(w) { return { id: w.id, notes: w.notes }; })
+      notes:    wines.map(function(w) { return { id: w.id, notes: w.notes }; }),
+      finalistRankings: finalists.map(function(f) { return { id: f.id, rank: f.finalistRank }; })
     };
 
     fetch(SCRIPT_URL, {
@@ -576,6 +581,19 @@ function syncToSheets() {
       setTimeout(function() { setSyncState('idle'); }, 3000);
     });
   }, 800);
+}
+
+/**
+ * Fetches the full group results for the Results tab.
+ * Returns { ok, finalists, tasterRankings }
+ */
+function fetchResults() {
+  if (!SCRIPT_URL || SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
+    return Promise.resolve({ ok: false, error: 'not_configured' });
+  }
+  return fetch(SCRIPT_URL + '?action=results')
+    .then(function(r) { return r.json(); })
+    .catch(function() { return { ok: false, error: 'network' }; });
 }
 
 /**
@@ -640,8 +658,14 @@ function beginTasting() {
 
     if (data.ok && data.found) {
       // Restore from Sheets — source of truth
-      wines     = data.wines     || wines;
-      finalists = data.finalists || [];
+      wines = data.wines || wines;
+      // Restore finalist personal rankings if saved
+      finalists = [];
+      if (data.finalistRankings && data.finalistRankings.length > 0) {
+        finalists = data.finalistRankings.map(function(f) {
+          return { id: f.id, finalistRank: f.rank, notes: '', avgRank: null, submissions: 0 };
+        });
+      }
     } else {
       // No record in Sheets — start completely clean, ignore localStorage
       wines = [
@@ -1084,62 +1108,80 @@ function tsDragEnd() {
    RESULTS TAB
    ════════════════════════════════════════ */
 
+/**
+ * Results tab: fetches group results from Sheets and renders:
+ * 1. Group finalist order (by avg rank, top 2 per flight)
+ * 2. Each taster's personal ranking of those 4 wines
+ * 3. Current taster's notes for each finalist wine
+ * Shows a loading state while fetching.
+ */
 function renderSummary() {
-  document.getElementById('sum-name').textContent = taster + '\u2019s Scorecard';
   var c = document.getElementById('sum-cards');
-  c.innerHTML = '';
+  c.innerHTML = '<div style="padding:24px 16px;text-align:center;font-size:14px;color:var(--ink-2);">' +
+    '<div class="load-spinner" style="margin:0 auto 12px;"></div>Loading group results…</div>';
+  document.getElementById('sum-name').textContent = 'Group Results';
 
-  // ── Finalist Flight ──
-  c.appendChild(mkSecHdr('Finalist Flight', null, false));
-  if (finalists.length === 4) {
+  fetchResults().then(function(data) {
+    c.innerHTML = '';
+
+    if (!data.ok || !data.finalists || data.finalists.length < 4) {
+      // Fallback: show personal scorecard if backend unavailable
+      c.innerHTML = '<div style="padding:14px;font-size:14px;color:var(--ink-3);font-style:italic;">Group results unavailable — check back once all tasters have submitted.</div>';
+      buildExport();
+      return;
+    }
+
+    var groupFinalists = data.finalists; // [{id, flight, avgRank, submissions}]
+    var tasterRankings = data.tasterRankings || {}; // {tasterName: {wineId: rank}}
+    var tasterNames    = Object.keys(tasterRankings);
+
+    // ── Finalist Flight — group order ──
+    c.appendChild(mkSecHdr('Finalist Flight — Group Results', null, false));
     var fcard = document.createElement('div');
     fcard.className = 'scard';
-    finalists.slice().sort(function(a, b) { return a.finalistRank - b.finalistRank; })
-      .forEach(function(fin, i) {
-        var wine = getWine(fin.id);
-        var fl   = (wine && wine.flight === 0) ? 'I' : 'II';
-        var row  = document.createElement('div');
-        row.className = 'srow' + (i > 0 ? ' srow-sep' : '');
-        row.innerHTML =
-          '<span class="srow-rank">' + (i + 1) + '</span>' +
-          '<div class="srow-body">' +
-            '<div class="srow-title">Wine ' + fin.id +
-              ' <span class="scard-tag">Flight ' + fl + '</span>' +
-              ' <span class="scard-tag" style="background:rgba(180,140,60,0.15);color:#8a6a20;">Finalist</span>' +
-              (fin.avgRank !== null && fin.avgRank < 999
-                ? ' <span class="avg-rank-badge">avg rank ' + fin.avgRank.toFixed(1) + '</span>'
-                : '') +
-            '</div>' +
-            (wine && wine.notes
-              ? '<div class="srow-note-lbl">Flight ' + fl + ' notes</div><div class="srow-note">' + wine.notes + '</div>'
-              : '') +
-            (fin.notes
-              ? '<div class="srow-note-lbl">Finalist notes</div><div class="srow-note">' + fin.notes + '</div>'
-              : (!wine || !wine.notes ? '<div class="srow-empty">No notes</div>' : '')) +
-          '</div>';
-        fcard.appendChild(row);
-      });
+
+    groupFinalists.forEach(function(fin, i) {
+      var wine = getWine(fin.id);
+      var fl   = fin.flight === 0 ? 'I' : 'II';
+      var row  = document.createElement('div');
+      row.className = 'srow' + (i > 0 ? ' srow-sep' : '');
+
+      // Build per-taster ranking chips
+      var tasterChips = tasterNames.map(function(name) {
+        var r = tasterRankings[name][fin.id];
+        var isCurrent = name === taster;
+        var style = isCurrent
+          ? 'background:var(--accent);color:#fff;'
+          : 'background:var(--accent-bg);color:var(--accent);';
+        return r
+          ? '<span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:100px;' + style + '">' + name + ': #' + r + '</span>'
+          : '';
+      }).filter(Boolean).join(' ');
+
+      // Current taster's notes for this wine
+      var myNotes = wine ? wine.notes : '';
+      var myFinNotes = (function() {
+        var f = finalists.filter(function(x) { return x.id === fin.id; })[0];
+        return f ? f.notes : '';
+      })();
+
+      row.innerHTML =
+        '<span class="srow-rank">' + (i + 1) + '</span>' +
+        '<div class="srow-body">' +
+          '<div class="srow-title">Wine ' + fin.id +
+            ' <span class="scard-tag">Flight ' + fl + '</span>' +
+            ' <span class="avg-rank-badge">avg ' + fin.avgRank.toFixed(1) + '</span>' +
+          '</div>' +
+          (tasterChips ? '<div style="display:flex;flex-wrap:wrap;gap:5px;margin:5px 0;">' + tasterChips + '</div>' : '') +
+          (myNotes ? '<div class="srow-note-lbl">Your flight notes</div><div class="srow-note">' + myNotes + '</div>' : '') +
+          (myFinNotes ? '<div class="srow-note-lbl">Your finalist notes</div><div class="srow-note">' + myFinNotes + '</div>' : '') +
+        '</div>';
+      fcard.appendChild(row);
+    });
     c.appendChild(fcard);
-  } else {
-    var nd = document.createElement('div');
-    nd.className = 'scard';
-    nd.innerHTML = '<div style="padding:14px;font-size:14px;color:var(--ink-3);font-style:italic;">Open the Finalists tab to populate the Finalist Flight.</div>';
-    c.appendChild(nd);
-  }
 
-  // ── Flight I ──
-  var f0wines = wines.filter(function(w) { return w.flight === 0; })
-                     .sort(function(a, b) { return a.rank - b.rank; });
-  c.appendChild(mkSecHdr('Flight I \u2014 5 Wines', 'sec-f0', true));
-  c.appendChild(mkFlightSection(f0wines, 'sec-f0'));
-
-  // ── Flight II ──
-  var f1wines = wines.filter(function(w) { return w.flight === 1; })
-                     .sort(function(a, b) { return a.rank - b.rank; });
-  c.appendChild(mkSecHdr('Flight II \u2014 5 Wines', 'sec-f1', true));
-  c.appendChild(mkFlightSection(f1wines, 'sec-f1'));
-
-  buildExport();
+    buildExport(groupFinalists, tasterRankings);
+  });
 }
 
 function mkSecHdr(label, collapseId, collapsible) {
@@ -1183,19 +1225,36 @@ function toggleSection(id) {
   if (chev) chev.style.transform = collapsed ? 'rotate(0deg)' : 'rotate(-90deg)';
 }
 
-function buildExport() {
+function buildExport(groupFinalists, tasterRankings) {
   var date = new Date().toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
   var txt  = "GAP'S CROWN VINEYARD \u2014 2023 PINOT NOIR BLIND TASTING\n";
   txt += "Taster: " + taster + " \u00b7 " + date + "\n" + '\u2500'.repeat(44) + "\n";
 
-  if (finalists.length === 4) {
+  if (groupFinalists && groupFinalists.length === 4) {
+    txt += "\nFINALIST FLIGHT \u2014 GROUP RESULTS\n";
+    groupFinalists.forEach(function(f, i) {
+      var wine = getWine(f.id);
+      txt += '#' + String(i + 1).padStart(2, '0') + '  Wine ' + f.id +
+             '  [Flight ' + (f.flight === 0 ? 'I' : 'II') + ']' +
+             '  avg rank ' + f.avgRank.toFixed(1) + '\n';
+      // Per-taster rankings
+      if (tasterRankings) {
+        Object.keys(tasterRankings).forEach(function(name) {
+          var r = tasterRankings[name][f.id];
+          if (r) txt += '     ' + name + ': #' + r + '\n';
+        });
+      }
+      var myFin = finalists.filter(function(x) { return x.id === f.id; })[0];
+      if (wine && wine.notes) txt += '     Your flight notes: ' + wine.notes + '\n';
+      if (myFin && myFin.notes) txt += '     Your finalist notes: ' + myFin.notes + '\n';
+    });
+  } else if (finalists.length === 4) {
     txt += "\nFINALIST FLIGHT \u2014 TOP 4\n";
     finalists.slice().sort(function(a, b) { return a.finalistRank - b.finalistRank; })
       .forEach(function(f, i) {
         var wine = getWine(f.id);
         txt += '#' + String(i + 1).padStart(2, '0') + '  Wine ' + f.id +
-               '  [Flight ' + (wine && wine.flight === 0 ? 'I' : 'II') + ']' +
-               (f.avgRank !== null && f.avgRank < 999 ? '  avg rank ' + f.avgRank.toFixed(1) : '') + '\n';
+               '  [Flight ' + (wine && wine.flight === 0 ? 'I' : 'II') + ']' + '\n';
         if (wine && wine.notes) txt += '     Flight notes: ' + wine.notes + '\n';
         if (f.notes)            txt += '     Finalist notes: ' + f.notes + '\n';
       });
