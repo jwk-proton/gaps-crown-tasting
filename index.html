@@ -467,7 +467,7 @@ html, body {
    CONFIGURATION
    Paste your deployed Apps Script URL here.
    ════════════════════════════════════════ */
-var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzOky0lNTfh6Ec0jxQjNk16PCaeKxShBGp4u4k90sdKQUjncuXrkyiJro8Q4OLTHq14CQ/exec';
+var SCRIPT_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
 
 
 /* ════════════════════════════════════════
@@ -476,16 +476,16 @@ var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzOky0lNTfh6Ec0jxQjNk1
 var taster = '';
 
 var wines = [
-  {id:'A', flight:0, rank:1,  notes:''},
-  {id:'B', flight:0, rank:2,  notes:''},
-  {id:'C', flight:0, rank:3,  notes:''},
-  {id:'D', flight:0, rank:4,  notes:''},
-  {id:'E', flight:0, rank:5,  notes:''},
-  {id:'F', flight:1, rank:6,  notes:''},
-  {id:'G', flight:1, rank:7,  notes:''},
-  {id:'H', flight:1, rank:8,  notes:''},
-  {id:'I', flight:1, rank:9,  notes:''},
-  {id:'J', flight:1, rank:10, notes:''}
+  {id:'A', flight:0, rank:1, notes:''},
+  {id:'B', flight:0, rank:2, notes:''},
+  {id:'C', flight:0, rank:3, notes:''},
+  {id:'D', flight:0, rank:4, notes:''},
+  {id:'E', flight:0, rank:5, notes:''},
+  {id:'F', flight:1, rank:1, notes:''},
+  {id:'G', flight:1, rank:2, notes:''},
+  {id:'H', flight:1, rank:3, notes:''},
+  {id:'I', flight:1, rank:4, notes:''},
+  {id:'J', flight:1, rank:5, notes:''}
 ];
 
 // Finalist array: [{id, finalistRank, notes, avgRank}]
@@ -630,17 +630,16 @@ function getWine(id) {
  * Takes the top 4 wines by avgRank (lower = better), preserving any
  * finalist notes the taster has already entered.
  */
-function deriveFinalistsFromAggregate(aggregate) {
-  var top4 = aggregate.slice(0, 4); // already sorted by avgRank asc
-
-  var newFin = top4.map(function(agg, i) {
+function deriveFinalistsFromAggregate(serverFinalists) {
+  // serverFinalists = [{id, flight, avgRank, submissions}] — top 2 from each flight
+  var newFin = serverFinalists.map(function(agg, i) {
     var existing = finalists.filter(function(f) { return f.id === agg.id; })[0];
     return {
-      id:            agg.id,
-      finalistRank:  existing ? existing.finalistRank : i + 1,
-      notes:         existing ? existing.notes : '',
-      avgRank:       agg.avgRank,
-      submissions:   agg.submissions
+      id:           agg.id,
+      finalistRank: existing ? existing.finalistRank : i + 1,
+      notes:        existing ? existing.notes : '',
+      avgRank:      agg.avgRank,
+      submissions:  agg.submissions
     };
   });
 
@@ -715,9 +714,9 @@ function renderFinalists() {
   fetchAggregate().then(function(data) {
     loading.style.display = 'none';
 
-    if (data.ok && data.aggregate && data.aggregate.length >= 4) {
+    if (data.ok && data.finalists && data.finalists.length >= 4) {
       // ── Group aggregate path ──
-      deriveFinalistsFromAggregate(data.aggregate);
+      deriveFinalistsFromAggregate(data.finalists);
 
       // Show which tasters have submitted
       if (data.tasters && data.tasters.length > 0) {
@@ -868,17 +867,29 @@ function showTab(idx) {
    ════════════════════════════════════════ */
 
 function rerank(listEl, f) {
-  var cards = listEl.querySelectorAll('.wcard');
-  var g = (f === 0) ? 1 : 6;
-  var lr = 1;
+  var cards = listEl.querySelectorAll(".wcard");
+  var r = 1;
   cards.forEach(function(c) {
     var w = wines.filter(function(x) { return x.id === c.dataset.id; })[0];
-    if (w) { w.rank = g++; w.flight = f; }
-    var b = c.querySelector('.rank-num');
-    if (b) b.textContent = lr++;
+    if (w) { w.rank = r; w.flight = f; }
+    var b = c.querySelector(".rank-num");
+    if (b) b.textContent = r;
+    r++;
   });
   save();
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 function rerankFinalists(listEl) {
   listEl.querySelectorAll('.wcard').forEach(function(c, i) {
