@@ -1124,18 +1124,28 @@ function renderSummary() {
     c.innerHTML = '';
 
     if (!data.ok || !data.finalists || data.finalists.length < 4) {
-      // Fallback: show personal scorecard if backend unavailable
       c.innerHTML = '<div style="padding:14px;font-size:14px;color:var(--ink-3);font-style:italic;">Group results unavailable — check back once all tasters have submitted.</div>';
-      buildExport();
+      buildExport(null, null);
       return;
     }
 
-    var groupFinalists = data.finalists; // [{id, flight, avgRank, submissions}]
-    var tasterRankings = data.tasterRankings || {}; // {tasterName: {wineId: rank}}
+    var groupFinalists = data.finalists; // [{id, flight, finalistAvg, submissions}]
+    var tasterRankings = data.tasterRankings || {};
     var tasterNames    = Object.keys(tasterRankings);
+    var hasFinalistVotes = data.hasFinalistVotes;
 
     // ── Finalist Flight — group order ──
     c.appendChild(mkSecHdr('Finalist Flight — Group Results', null, false));
+
+    if (!hasFinalistVotes) {
+      var pending = document.createElement('div');
+      pending.className = 'scard';
+      pending.innerHTML = '<div style="padding:14px;font-size:14px;color:var(--ink-3);font-style:italic;">Finalist round not yet scored — complete the Finalists tab to see results.</div>';
+      c.appendChild(pending);
+      buildExport(null, null);
+      return;
+    }
+
     var fcard = document.createElement('div');
     fcard.className = 'scard';
 
@@ -1145,7 +1155,7 @@ function renderSummary() {
       var row  = document.createElement('div');
       row.className = 'srow' + (i > 0 ? ' srow-sep' : '');
 
-      // Build per-taster ranking chips
+      // Per-taster finalist ranking chips
       var tasterChips = tasterNames.map(function(name) {
         var r = tasterRankings[name][fin.id];
         var isCurrent = name === taster;
@@ -1157,19 +1167,23 @@ function renderSummary() {
           : '';
       }).filter(Boolean).join(' ');
 
-      // Current taster's notes for this wine
+      // Current taster's own notes
       var myNotes = wine ? wine.notes : '';
       var myFinNotes = (function() {
         var f = finalists.filter(function(x) { return x.id === fin.id; })[0];
         return f ? f.notes : '';
       })();
 
+      var avgLabel = fin.finalistAvg !== null
+        ? '<span class="avg-rank-badge">finalist avg ' + fin.finalistAvg.toFixed(1) + '</span>'
+        : '';
+
       row.innerHTML =
         '<span class="srow-rank">' + (i + 1) + '</span>' +
         '<div class="srow-body">' +
           '<div class="srow-title">Wine ' + fin.id +
             ' <span class="scard-tag">Flight ' + fl + '</span>' +
-            ' <span class="avg-rank-badge">avg ' + fin.avgRank.toFixed(1) + '</span>' +
+            avgLabel +
           '</div>' +
           (tasterChips ? '<div style="display:flex;flex-wrap:wrap;gap:5px;margin:5px 0;">' + tasterChips + '</div>' : '') +
           (myNotes ? '<div class="srow-note-lbl">Your flight notes</div><div class="srow-note">' + myNotes + '</div>' : '') +

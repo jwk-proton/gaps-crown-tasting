@@ -231,30 +231,10 @@ function doGetResults(e) {
       return r[0] && r[0].toString().trim() !== '';
     });
 
-    // Compute group finalists (same as aggregate)
-    var totals = {}, counts = {};
-    WINE_IDS.forEach(function(id) { totals[id] = 0; counts[id] = 0; });
-    tasterRows.forEach(function(row) {
-      WINE_IDS.forEach(function(id, i) {
-        var rank = parseFloat(row[COL_RANK_0 - 1 + i]);
-        if (!isNaN(rank) && rank > 0) { totals[id] += rank; counts[id]++; }
-      });
-    });
-
-    function flightAgg(ids, flightNum) {
-      return ids.map(function(id) {
-        var n = counts[id];
-        return { id: id, flight: flightNum, avgRank: n > 0 ? Math.round(totals[id]/n*100)/100 : 999, submissions: n };
-      }).sort(function(a, b) { return a.avgRank - b.avgRank; });
-    }
-
-    var finalists = flightAgg(FLIGHT_0, 0).slice(0,2).concat(flightAgg(FLIGHT_1, 1).slice(0,2))
-      .sort(function(a, b) { return a.avgRank - b.avgRank; });
-
     // Collect each taster's personal finalist rankings
     var tasterRankings = {};
     tasterRows.forEach(function(row) {
-      var name    = row[0].toString();
+      var name     = row[0].toString();
       var rankings = {};
       WINE_IDS.forEach(function(id, i) {
         var fr = parseFloat(row[COL_FIN_0 - 1 + i]);
@@ -263,7 +243,66 @@ function doGetResults(e) {
       tasterRankings[name] = rankings;
     });
 
-    return jsonResponse({ ok: true, finalists: finalists, tasterRankings: tasterRankings });
+    // Determine which 4 wines are finalists from the aggregate
+    var flightTotals = {}, flightCounts = {};
+    WINE_IDS.forEach(function(id) { flightTotals[id] = 0; flightCounts[id] = 0; });
+    tasterRows.forEach(function(row) {
+      WINE_IDS.forEach(function(id, i) {
+        var rank = parseFloat(row[COL_RANK_0 - 1 + i]);
+        if (!isNaN(rank) && rank > 0) { flightTotals[id] += rank; flightCounts[id]++; }
+      });
+    });
+
+    function flightAgg(ids, flightNum) {
+      return ids.map(function(id) {
+        var n = flightCounts[id];
+        return { id: id, flight: flightNum, n: n,
+          flightAvg: n > 0 ? Math.round(flightTotals[id]/n*100)/100 : 999 };
+      }).sort(function(a, b) { return a.flightAvg - b.flightAvg; });
+    }
+
+    var finalistIds = flightAgg(FLIGHT_0, 0).slice(0,2)
+      .concat(flightAgg(FLIGHT_1, 1).slice(0,2));
+
+    // Compute finalist round avg for each of the 4 finalist wines
+    var finTotals = {}, finCounts = {};
+    finalistIds.forEach(function(f) { finTotals[f.id] = 0; finCounts[f.id] = 0; });
+
+    Object.keys(tasterRankings).forEach(function(name) {
+      finalistIds.forEach(function(f) {
+        var r = tasterRankings[name][f.id];
+        if (r !== undefined && !isNaN(r) && r > 0) {
+          finTotals[f.id] += r;
+          finCounts[f.id]++;
+        }
+      });
+    });
+
+    // Build results array ordered by finalist round avg
+    var finalistResults = finalistIds.map(function(f) {
+      var n = finCounts[f.id];
+      return {
+        id:          f.id,
+        flight:      f.flight,
+        finalistAvg: n > 0 ? Math.round(finTotals[f.id]/n*100)/100 : null,
+        submissions: n
+      };
+    }).sort(function(a, b) {
+      // Wines with no finalist votes go to the bottom
+      if (a.finalistAvg === null && b.finalistAvg === null) return 0;
+      if (a.finalistAvg === null) return 1;
+      if (b.finalistAvg === null) return -1;
+      return a.finalistAvg - b.finalistAvg;
+    });
+
+    var hasFinalistVotes = finalistResults.some(function(f) { return f.finalistAvg !== null; });
+
+    return jsonResponse({
+      ok:              true,
+      hasFinalistVotes: hasFinalistVotes,
+      finalists:       finalistResults,
+      tasterRankings:  tasterRankings
+    });
 
   } catch (err) {
     return jsonResponse({ ok: false, error: err.toString() });
